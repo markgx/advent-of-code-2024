@@ -1,37 +1,12 @@
-def all_increasing?(numbers)
-  numbers.each_with_index do |current, i|
-    next_number = numbers[i + 1]
-    break if next_number.nil?
+GRADUAL_MIN_THRESHOLD = 1
+GRADUAL_MAX_THRESHOLD = 3
 
-    if current >= next_number
-      return false
-    end
-  end
+def sequence_satisfied?(numbers)
+  numbers.each_with_index do |curr_num, i|
+    next_num = numbers[i + 1]
+    break if next_num.nil?
 
-  true
-end
-
-def all_decreasing?(numbers)
-  numbers.each_with_index do |current, i|
-    next_number = numbers[i + 1]
-    break if next_number.nil?
-
-    if current <= next_number
-      return false
-    end
-  end
-
-  true
-end
-
-def all_gradually_changing?(numbers)
-  numbers.each_with_index do |current, i|
-    next_number = numbers[i + 1]
-    break if next_number.nil?
-
-    difference = (current - next_number).abs
-
-    if difference < 1 || difference > 3
+    unless yield(curr_num, next_num)
       return false
     end
   end
@@ -45,7 +20,16 @@ File.open('input.txt', 'r') do |input_file|
   input_file.each_line do |line|
     numbers = line.split(' ').map(&:to_i)
 
-    if (all_increasing?(numbers) || all_decreasing?(numbers)) && all_gradually_changing?(numbers)
+    is_gradually_changing_check = Proc.new do |curr_num, next_num|
+      difference = (curr_num - next_num).abs
+
+      difference >= GRADUAL_MIN_THRESHOLD && difference <= GRADUAL_MAX_THRESHOLD
+    end
+
+    if (
+        sequence_satisfied?(numbers) {|curr_num, next_num| curr_num < next_num } ||
+        sequence_satisfied?(numbers) {|curr_num, next_num| curr_num > next_num }
+      ) && sequence_satisfied?(numbers, &is_gradually_changing_check)
       safe_count += 1
     end
   end
